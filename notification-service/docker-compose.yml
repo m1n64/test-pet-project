@@ -1,0 +1,59 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: notify-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    restart: unless-stopped
+    volumes:
+      - notify_db_data:/var/lib/postgresql/data
+    networks:
+      - pet-project-first-network
+
+  redis:
+    container_name: notify-redis
+    hostname: redis
+    image: redis:latest
+    volumes:
+      - notify_redis_data:/data
+    restart: unless-stopped
+    networks:
+      - pet-project-first-network
+
+  app:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+      target: prod
+    container_name: notify-app
+    ports:
+      - "${SERVICE_PORT:-8000}:8000"
+    volumes:
+      - ./:/app:cached
+    depends_on:
+      - db
+      - redis
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      DB_HOST: db
+      DB_PORT: ${POSTGRES_PORT:-5432}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASS: ${POSTGRES_PASSWORD}
+      DB_NAME: ${POSTGRES_DB}
+      GIN_MODE: "release"
+    restart: unless-stopped
+    networks:
+      - pet-project-first-network
+
+volumes:
+  notify_db_data:
+    driver: local
+  notify_redis_data:
+    driver: local
+
+networks:
+  pet-project-first-network:
+    external: true

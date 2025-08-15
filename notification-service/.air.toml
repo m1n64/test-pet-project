@@ -1,0 +1,22 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+cmd = "CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -gcflags='all=-N -l' -o ./tmp/main ./cmd/start"
+full_bin = "sh -lc '/go/bin/dlv exec ./tmp/main --continue --listen=:5864 --api-version=2 --log=true --headless=true --accept-multiclient'"
+shell = "sh"
+
+[log]
+time = true
+
+[color]
+main = "yellow"
+watcher = "cyan"
+build = "green"
+runner = "magenta"
+
+[watch]
+include = ["./*"]
+exclude = []
+exclude_file = [".DS_Store", ".git/*", "tmp/*", "*.test", "*.md"]
+interval = "100ms"

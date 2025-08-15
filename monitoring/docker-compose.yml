@@ -1,0 +1,55 @@
+services:
+  mongo:
+    image: mongo:6
+    container_name: monitoring-mongo
+    volumes:
+      - monitor_mongo_data:/data/db
+    networks:
+      - pet-project-first-network
+
+  opensearch:
+    image: opensearchproject/opensearch:2.13.0
+    container_name: monitoring-opensearch
+    environment:
+      - discovery.type=single-node
+      # - plugins.security.disabled=true
+      - bootstrap.memory_lock=true
+      - DISABLE_SECURITY_PLUGIN=true 
+      - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
+    ulimits:
+      memlock: { soft: -1, hard: -1 }
+    volumes:
+      - monitor_opensearch_data:/usr/share/opensearch/data
+    ports: ["9200:9200"]
+    networks:
+      - pet-project-first-network
+
+  graylog:
+    image: graylog/graylog:5.2
+    container_name: monitoring-graylog
+    depends_on: [mongo, opensearch]
+    environment:
+      GRAYLOG_PASSWORD_SECRET: "some-long-random-string-change-me"
+      # echo -n admin | sha256sum  (на Mac: shasum -a 256)
+      GRAYLOG_ROOT_PASSWORD_SHA2: "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918" # пароль admin
+      GRAYLOG_HTTP_EXTERNAL_URI: "http://localhost:9000/"
+      GRAYLOG_ELASTICSEARCH_HOSTS: "http://opensearch:9200"
+      GRAYLOG_MONGODB_URI: "mongodb://mongo:27017/graylog"
+    ports:
+      - "9000:9000" 
+      - "5555:5555/tcp"
+      - "12201:12201/udp"
+      - "12202:12202" 
+    volumes:
+      - monitor_graylog_data:/usr/share/graylog/data
+    networks:
+      - pet-project-first-network
+
+volumes:
+  monitor_mongo_data:
+  monitor_graylog_data:
+  monitor_opensearch_data:
+
+networks:
+  pet-project-first-network:
+    external: true
