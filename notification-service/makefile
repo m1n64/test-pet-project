@@ -11,7 +11,7 @@ POSTGRES_DB=$(shell grep POSTGRES_DB .env | cut -d '=' -f2)
 POSTGRES_USER=$(shell grep POSTGRES_USER .env | cut -d '=' -f2)
 POSTGRES_PASSWORD=$(shell grep POSTGRES_PASSWORD .env | cut -d '=' -f2)
 
-.PHONY: help up prod stop down restart restart-container stop-container logs bash seed psql redis
+.PHONY: help up prod stop down restart restart-container stop-container logs bash seed cli psql redis
 
 ## 📜 Display all available commands
 help:
@@ -32,6 +32,7 @@ help:
 	@echo "🖥  Open container shell:"
 	@echo "  make bash           - Open a bash shell inside the app container"
 	@echo "  make seed           - Seed the database"
+	@echo "  make cli            - CLI command"
 	@echo ""
 	@echo "📜  Logs:"
 	@echo "  make logs <container> - View logs of a specific container"
@@ -94,6 +95,10 @@ redis:
 ## 🔥 Run seeders
 seed:
 	docker-compose exec $(APP_CONTAINER) go run cmd/seed/main.go
+
+## 🔥 Run CLI command
+cli:
+	docker-compose exec $(APP_CONTAINER) go run cmd/cli/main.go
 
 ## Fix for make to avoid creating unnecessary files
 %:

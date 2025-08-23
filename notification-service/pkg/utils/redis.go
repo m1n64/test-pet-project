@@ -7,8 +7,6 @@ import (
 	"time"
 )
 
-var Ctx = context.Background()
-
 var Rdb *redis.Client
 
 type RedisClient interface {
@@ -47,6 +45,6 @@ func CreateRedisConn(redisHost string, redisPort string) *redis.Client {
 	return Rdb
 }
 
-func GetRedisConn() (context.Context, *redis.Client) {
-	return Ctx, Rdb
+func GetRedisConn() *redis.Client {
+	return Rdb
 }

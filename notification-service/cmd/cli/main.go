@@ -11,5 +11,5 @@ func init() {
 }
 
 func main() {
-	dependencies.Logger.Info("Successfully seeded")
+	dependencies.Logger.Info("CLI commands")
 }

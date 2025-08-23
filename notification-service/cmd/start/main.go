@@ -3,7 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
+	"notification-service-api/internal/shared/httpx/middlewares"
+	"notification-service-api/internal/system/delivery/http"
 	"notification-service-api/pkg/di"
 	"notification-service-api/pkg/utils"
 )
@@ -21,15 +22,10 @@ func main() {
 		fmt.Println("Server started on port 8000")
 
 		r := gin.Default()
-		r.Use(utils.LoggingContextMiddleware(dependencies.Logger))
+		r.Use(middlewares.LoggingContextMiddleware(dependencies.Logger))
+		r.Use(middlewares.AccessLogMiddleware())
 		//v1Group := r.Group("/v1")
-
-		r.GET("/ping", func(c *gin.Context) {
-			logger := c.MustGet(utils.CtxKeyLogger).(*zap.Logger)
-			logger.Info("Pong")
-
-			c.JSON(200, gin.H{"pong": true, "request_id": c.GetString("request_id")})
-		})
+		http.InitSystemRoutes(r)
 
 		r.Run(":8000")
 	}()
