@@ -8,7 +8,7 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
-	"notification-service-api/internal/shared/httpx"
+	"notification-service-api/internal/shared/rpc"
 	"strconv"
 	"strings"
 	"time"
@@ -49,7 +49,7 @@ func AccessLogMiddleware() gin.HandlerFunc {
 			" | in: " + reqBody +
 			" | out: " + respBody
 
-		log := httpx.FromLogger(c)
+		log := rpc.FromLogger(c)
 		fields := []zap.Field{
 			zap.Int("status", status),
 			zap.Int("size_bytes", size),
