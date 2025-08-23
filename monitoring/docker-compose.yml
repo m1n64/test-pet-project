@@ -29,9 +29,9 @@ services:
     container_name: monitoring-graylog
     depends_on: [mongo, opensearch]
     environment:
-      GRAYLOG_PASSWORD_SECRET: "some-long-random-string-change-me"
+      GRAYLOG_PASSWORD_SECRET: ${GRAYLOG_PASSWORD_SECRET}
       # echo -n admin | sha256sum  (на Mac: shasum -a 256)
-      GRAYLOG_ROOT_PASSWORD_SHA2: "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918" # пароль admin
+      GRAYLOG_ROOT_PASSWORD_SHA2: ${GRAYLOG_ROOT_PASSWORD_SHA2}
       GRAYLOG_HTTP_EXTERNAL_URI: "http://localhost:9000/"
       GRAYLOG_ELASTICSEARCH_HOSTS: "http://opensearch:9200"
       GRAYLOG_MONGODB_URI: "mongodb://mongo:27017/graylog"

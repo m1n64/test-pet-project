@@ -1,4 +1,4 @@
-SERVICES ?= notification-service monitoring
+SERVICES ?= shared monitoring notification-service
 
 S ?=
 FILTERED_SERVICES := $(if $(S),$(filter $(S),$(SERVICES)),$(SERVICES))
@@ -43,7 +43,6 @@ copy-envs:
 		fi
 	done
 
-# Вспомогательный макрос: вызвать make <target> в подкаталоге, если там есть Makefile
 define CALL_IN_DIR
 	if [ -f $(1)/Makefile ]; then \
 		$(MAKE) -C $(1) $(2); \
@@ -58,6 +57,10 @@ up:
 		echo "🟢 Starting $$service..."; \
 		if [ -f $$service/Makefile ]; then \
 			$(MAKE) -C $$service up || { echo "❌ Error on 'up' in $$service"; exit 1; }; \
+			if [ "$$service" = "shared" ]; then \
+				echo "⏳ Waiting 15s for $$service to be ready..."; \
+				sleep 15; \
+			fi; \
 		else \
 			echo "⚠️  $$service: Makefile not found, skipping"; \
 		fi; \
@@ -102,8 +105,6 @@ clean:
 		$(call CALL_IN_DIR,$$service,down)
 	done
 
-# Универсальный прокси: make <любой-таргет> [S="..."]
-# Например: make migrate S="notification-service"
 %:
 	@set -e
 	for service in $(FILTERED_SERVICES); do
