@@ -1,5 +1,6 @@
 package respond
 
+// TODO: rewrite to JSON-RPC 2.0 API
 type Response[T any] struct {
 	Success bool      `json:"success"`
 	Data    *T        `json:"data,omitempty"`

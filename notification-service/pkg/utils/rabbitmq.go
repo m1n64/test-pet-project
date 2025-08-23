@@ -4,54 +4,29 @@ import (
 	"github.com/streadway/amqp"
 	"log"
 	"sync"
+	"time"
 )
 
 type RabbitMQConnection struct {
-	Connection *amqp.Connection
-	Channel    *amqp.Channel
+	conn *amqp.Connection
+	mu   sync.Mutex
+	dsn  string
 }
 
-var instance *RabbitMQConnection
-var once sync.Once
+var (
+	instance *RabbitMQConnection
+	once     sync.Once
+)
 
-func ConnectRabbitMQ(rabbitHost string) *RabbitMQConnection {
+func ConnectRabbitMQ(rabbitURL string) *RabbitMQConnection {
 	once.Do(func() {
-		conn, err := amqp.Dial(rabbitHost)
-		if err != nil {
-			log.Fatalf("Failed to connect to RabbitMQ: %s", err)
-		}
-
-		ch, err := conn.Channel()
-		if err != nil {
-			log.Fatalf("Failed to open a channel: %s", err)
-		}
-
-		instance = &RabbitMQConnection{
-			Connection: conn,
-			Channel:    ch,
+		instance = &RabbitMQConnection{dsn: rabbitURL}
+		if err := instance.connect(); err != nil {
+			log.Fatalf("RabbitMQ: initial connect failed: %v", err)
 		}
 		log.Println("RabbitMQ connection established")
 	})
 	return instance
-}
-
-func InitializeQueues() {
-	queues := []string{}
-
-	for _, queue := range queues {
-		_, err := instance.Channel.QueueDeclare(
-			queue,
-			true,
-			false,
-			false,
-			false,
-			nil,
-		)
-		if err != nil {
-			log.Fatalf("Failed to declare queue %s: %s", queue, err)
-		}
-		log.Printf("Queue declared: %s", queue)
-	}
 }
 
 func GetRabbitMQInstance() *RabbitMQConnection {
@@ -61,12 +36,46 @@ func GetRabbitMQInstance() *RabbitMQConnection {
 	return instance
 }
 
-func (r *RabbitMQConnection) CloseRabbitMQ() {
-	if r.Channel != nil {
-		r.Channel.Close()
+func (r *RabbitMQConnection) connect() error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	conn, err := amqp.Dial(r.dsn)
+	if err != nil {
+		return err
 	}
-	if r.Connection != nil {
-		r.Connection.Close()
+	r.conn = conn
+
+	go func() {
+		errCh := conn.NotifyClose(make(chan *amqp.Error))
+		if err := <-errCh; err != nil {
+			log.Printf("RabbitMQ connection closed, reason: %v", err)
+			for {
+				time.Sleep(5 * time.Second)
+				if err := r.connect(); err == nil {
+					log.Println("RabbitMQ reconnected")
+					return
+				}
+			}
+		}
+	}()
+
+	return nil
+}
+
+func (r *RabbitMQConnection) Channel() (*amqp.Channel, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.conn == nil {
+		return nil, amqp.ErrClosed
 	}
-	log.Println("RabbitMQ connection closed")
+	return r.conn.Channel()
+}
+
+func (r *RabbitMQConnection) Close() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.conn != nil {
+		_ = r.conn.Close()
+	}
 }

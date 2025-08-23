@@ -8,5 +8,5 @@ import (
 func InitSystemRoutes(r *gin.Engine) {
 	systemHandler := NewSystemHandler()
 
-	r.GET("/ping", httpx.Wrap(systemHandler.PingHandler))
+	r.GET("/ping", httpx.Wrap(systemHandler.Ping))
 }
