@@ -6,18 +6,19 @@ import (
 	"time"
 )
 
-func Publish(ch *amqp.Channel, routingKey string, body []byte, headers amqp.Table) error {
+func Publish(ch *amqp.Channel, routingKey string, body []byte, headers amqp.Table, correlationID *string) error {
 	return ch.Publish(
 		notifications.ExchangeNotifications,
 		routingKey,
 		false,
 		false,
 		amqp.Publishing{
-			DeliveryMode: amqp.Persistent,
-			ContentType:  "application/x-msgpack",
-			Body:         body,
-			Headers:      headers,
-			Timestamp:    time.Now(),
+			DeliveryMode:  amqp.Persistent,
+			ContentType:   "application/x-msgpack",
+			Body:          body,
+			Headers:       headers,
+			Timestamp:     time.Now(),
+			CorrelationId: *correlationID,
 		},
 	)
 }

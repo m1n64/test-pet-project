@@ -27,7 +27,13 @@ func (b *Builder[T]) Data(v T) *Builder[T] {
 
 func (b *Builder[T]) Error(rpcCode RPCErrorCode, appCode, message string, details interface{}) *Builder[T] {
 	b.resp.Result = nil
-	b.resp.Error = &RPCError{
+	b.resp.Error = NewRPCError(rpcCode, appCode, message, details)
+
+	return b
+}
+
+func NewRPCError(rpcCode RPCErrorCode, appCode, message string, details any) *RPCError {
+	return &RPCError{
 		Code:    rpcCode,
 		Message: message,
 		Data: &ErrorDTO{
@@ -36,12 +42,6 @@ func (b *Builder[T]) Error(rpcCode RPCErrorCode, appCode, message string, detail
 			Details: details,
 		},
 	}
-
-	return b
-}
-
-func (b *Builder[T]) RawError() {
-
 }
 
 func (b *Builder[T]) JSON(c Ctx) {

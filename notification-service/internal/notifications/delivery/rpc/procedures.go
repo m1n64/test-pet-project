@@ -1,13 +1,13 @@
 package rpc
 
 import (
-	"github.com/gin-gonic/gin"
+	"notification-service-api/internal/notifications/delivery/rpc/dto"
 	"notification-service-api/internal/shared/rpc"
 	"notification-service-api/pkg/di"
 )
 
-func InitNotificationRoutes(r *gin.Engine, dependencies *di.Dependencies) {
-	notificationHandler := NewNotificationHandler()
+func InitNotificationProcedures(dependencies *di.Dependencies) {
+	notificationHandler := NewNotificationHandler(dependencies.Validator, dependencies.TelegramService)
 
-	r.POST("/telegram/send", rpc.Wrap(notificationHandler.SendToTelegram))
+	dependencies.Registry.Register("telegram.send", rpc.Typed[dto.TelegramRequestSendParams](notificationHandler.SendToTelegram))
 }

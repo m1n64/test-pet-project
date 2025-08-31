@@ -6,6 +6,8 @@ import (
 	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
+	"notification-service-api/internal/notifications/app"
+	"notification-service-api/internal/notifications/infra/telegram"
 	"notification-service-api/internal/shared/queue"
 	"notification-service-api/internal/shared/rpc"
 	"notification-service-api/pkg/utils"
@@ -13,12 +15,13 @@ import (
 )
 
 type Dependencies struct {
-	Logger    *zap.Logger
-	Redis     *redis.Client
-	DB        *gorm.DB
-	RabbitMQ  *utils.RabbitMQConnection
-	Validator *validator.Validate
-	Registry  *rpc.Registry
+	Logger          *zap.Logger
+	Redis           *redis.Client
+	DB              *gorm.DB
+	RabbitMQ        *utils.RabbitMQConnection
+	Validator       *validator.Validate
+	Registry        *rpc.Registry
+	TelegramService *app.TelegramService
 }
 
 func InitDependencies() *Dependencies {
@@ -53,14 +56,18 @@ func InitDependencies() *Dependencies {
 
 	registry := rpc.NewRegistry()
 
+	tgApi := telegram.NewTGApiClient()
+	tgService := app.NewTelegramService(tgApi, rabbitmqConn)
+
 	logger.Info("Init dependencies successfully")
 
 	return &Dependencies{
-		Logger:    logger,
-		Redis:     redisConn,
-		DB:        dbConn,
-		RabbitMQ:  rabbitmqConn,
-		Validator: validate,
-		Registry:  registry,
+		Logger:          logger,
+		Redis:           redisConn,
+		DB:              dbConn,
+		RabbitMQ:        rabbitmqConn,
+		Validator:       validate,
+		Registry:        registry,
+		TelegramService: tgService,
 	}
 }

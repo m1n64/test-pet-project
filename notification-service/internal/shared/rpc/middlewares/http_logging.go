@@ -29,6 +29,7 @@ func LoggingContextMiddleware(base *zap.Logger) gin.HandlerFunc {
 			zap.String(rpc.CtxKeyEndpoint, ep),
 			zap.String(rpc.CtxKeyClientIP, clientIP),
 			zap.String(rpc.CtxKeyUserAgent, ua),
+			//zap.Any(rpc.CtxKeyHeaders, c.Request.Header),
 		)
 
 		c.Set(rpc.CtxKeyLogger, reqLogger)

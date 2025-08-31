@@ -3,10 +3,11 @@ package rpc
 import (
 	"notification-service-api/internal/shared/rpc"
 	"notification-service-api/internal/system/delivery/rpc/dto"
+	"notification-service-api/pkg/di"
 )
 
-func InitSystemRoutes(registry *rpc.Registry) {
+func InitSystemProcedures(dependencies *di.Dependencies) {
 	systemHandler := NewSystemHandler()
 
-	registry.Register("ping", rpc.Typed[dto.PingParams](systemHandler.Ping))
+	dependencies.Registry.Register("system.ping", rpc.Typed[dto.PingParams](systemHandler.Ping))
 }

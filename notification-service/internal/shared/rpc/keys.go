@@ -13,6 +13,7 @@ const (
 	CtxKeyMethod    = "method"
 	CtxKeyClientIP  = "client_ip"
 	CtxKeyUserAgent = "user_agent"
+	CtxKeyHeaders   = "client_headers"
 )
 
 var baseLogger *zap.Logger

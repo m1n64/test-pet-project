@@ -1,9 +1,9 @@
 package dto
 
-type TelegramRequestSendDTO struct {
-	To      string            `json:"to" validate:"required"`
-	Message string            `json:"message" validate:"required"`
-	Vars    map[string]string `json:"vars,omitempty"`
+type TelegramRequestSendParams struct {
+	To        string  `json:"to" validate:"required"`
+	Message   string  `json:"message" validate:"required"`
+	ParseMode *string `json:"parse_mode,omitempty"`
 }
 
 type TelegramResponseSendDTO struct {
