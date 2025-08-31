@@ -6,7 +6,7 @@ import (
 	"notification-service-api/internal/shared/rpc"
 	"notification-service-api/internal/shared/rpc/handlers"
 	"notification-service-api/internal/shared/rpc/middlewares"
-	"notification-service-api/internal/system/delivery/http"
+	systemRpc "notification-service-api/internal/system/delivery/rpc"
 	"notification-service-api/pkg/di"
 	"notification-service-api/pkg/utils"
 )
@@ -27,7 +27,7 @@ func main() {
 		r.Use(middlewares.LoggingContextMiddleware(dependencies.Logger))
 		r.Use(middlewares.AccessLogMiddleware())
 
-		http.InitSystemRoutes(dependencies.Registry)
+		systemRpc.InitSystemRoutes(dependencies.Registry)
 
 		rpcHandler := handlers.NewRPCHandler(dependencies.Registry)
 

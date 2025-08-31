@@ -1,9 +1,9 @@
-package http
+package rpc
 
 import (
 	"notification-service-api/internal/shared/rpc"
 	"notification-service-api/internal/shared/rpc/respond"
-	"notification-service-api/internal/system/delivery/http/dto"
+	"notification-service-api/internal/system/delivery/rpc/dto"
 )
 
 type SystemHandler struct {
