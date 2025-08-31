@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
-	"notification-service-api/internal/shared/httpx"
+	"notification-service-api/internal/shared/rpc"
 	"strings"
 )
 
@@ -24,15 +24,15 @@ func LoggingContextMiddleware(base *zap.Logger) gin.HandlerFunc {
 		ua := c.Request.UserAgent()
 
 		reqLogger := base.With(
-			zap.String(httpx.CtxKeyRequestID, rid),
-			zap.String(httpx.CtxKeyMethod, c.Request.Method),
-			zap.String(httpx.CtxKeyEndpoint, ep),
-			zap.String(httpx.CtxKeyClientIP, clientIP),
-			zap.String(httpx.CtxKeyUserAgent, ua),
+			zap.String(rpc.CtxKeyRequestID, rid),
+			zap.String(rpc.CtxKeyMethod, c.Request.Method),
+			zap.String(rpc.CtxKeyEndpoint, ep),
+			zap.String(rpc.CtxKeyClientIP, clientIP),
+			zap.String(rpc.CtxKeyUserAgent, ua),
 		)
 
-		c.Set(httpx.CtxKeyLogger, reqLogger)
-		c.Set(httpx.CtxKeyRequestID, rid)
+		c.Set(rpc.CtxKeyLogger, reqLogger)
+		c.Set(rpc.CtxKeyRequestID, rid)
 		c.Writer.Header().Set("X-Request-ID", rid)
 
 		c.Next()

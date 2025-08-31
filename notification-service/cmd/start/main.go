@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"notification-service-api/internal/shared/httpx/middlewares"
+	"notification-service-api/internal/shared/rpc"
+	"notification-service-api/internal/shared/rpc/handlers"
+	"notification-service-api/internal/shared/rpc/middlewares"
 	"notification-service-api/internal/system/delivery/http"
 	"notification-service-api/pkg/di"
 	"notification-service-api/pkg/utils"
@@ -24,8 +26,12 @@ func main() {
 		r := gin.Default()
 		r.Use(middlewares.LoggingContextMiddleware(dependencies.Logger))
 		r.Use(middlewares.AccessLogMiddleware())
-		//v1Group := r.Group("/v1")
-		http.InitSystemRoutes(r)
+
+		http.InitSystemRoutes(dependencies.Registry)
+
+		rpcHandler := handlers.NewRPCHandler(dependencies.Registry)
+
+		r.POST("/rpc", rpc.Wrap(rpcHandler.MainRPCHandler))
 
 		r.Run(":8000")
 	}()

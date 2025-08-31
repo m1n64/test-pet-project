@@ -1,4 +1,4 @@
-package httpx
+package rpc
 
 import (
 	"go.uber.org/zap/zapcore"

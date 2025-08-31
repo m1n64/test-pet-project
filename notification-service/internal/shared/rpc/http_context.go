@@ -1,4 +1,4 @@
-package httpx
+package rpc
 
 import (
 	"github.com/gin-gonic/gin"

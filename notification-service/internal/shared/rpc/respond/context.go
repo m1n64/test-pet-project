@@ -4,4 +4,5 @@ package respond
 type Ctx interface {
 	JSON(int, any)
 	GetString(string) string
+	Status(code int)
 }

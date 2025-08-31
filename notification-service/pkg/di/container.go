@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 	"notification-service-api/internal/shared/queue"
+	"notification-service-api/internal/shared/rpc"
 	"notification-service-api/pkg/utils"
 	"os"
 )
@@ -17,6 +18,7 @@ type Dependencies struct {
 	DB        *gorm.DB
 	RabbitMQ  *utils.RabbitMQConnection
 	Validator *validator.Validate
+	Registry  *rpc.Registry
 }
 
 func InitDependencies() *Dependencies {
@@ -49,6 +51,8 @@ func InitDependencies() *Dependencies {
 
 	validate := utils.InitValidator()
 
+	registry := rpc.NewRegistry()
+
 	logger.Info("Init dependencies successfully")
 
 	return &Dependencies{
@@ -57,5 +61,6 @@ func InitDependencies() *Dependencies {
 		DB:        dbConn,
 		RabbitMQ:  rabbitmqConn,
 		Validator: validate,
+		Registry:  registry,
 	}
 }

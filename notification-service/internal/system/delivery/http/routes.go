@@ -1,12 +1,12 @@
 package http
 
 import (
-	"github.com/gin-gonic/gin"
-	"notification-service-api/internal/shared/httpx"
+	"notification-service-api/internal/shared/rpc"
+	"notification-service-api/internal/system/delivery/http/dto"
 )
 
-func InitSystemRoutes(r *gin.Engine) {
+func InitSystemRoutes(registry *rpc.Registry) {
 	systemHandler := NewSystemHandler()
 
-	r.GET("/ping", httpx.Wrap(systemHandler.Ping))
+	registry.Register("ping", rpc.Typed[dto.PingParams](systemHandler.Ping))
 }

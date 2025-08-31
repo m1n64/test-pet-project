@@ -6,7 +6,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"log"
-	"notification-service-api/internal/shared/httpx"
+	"notification-service-api/internal/shared/rpc"
 	"os"
 	"strings"
 )
@@ -54,7 +54,7 @@ func InitLogs() *zap.Logger {
 		level,
 	)
 
-	consoleCore = httpx.WrapWithEndpointPrefix(consoleCore)
+	consoleCore = rpc.WrapWithEndpointPrefix(consoleCore)
 
 	var graylogEnabled bool
 	var graylogAddr = strings.TrimSpace(os.Getenv("GRAYLOG_HOST"))
@@ -72,7 +72,7 @@ func InitLogs() *zap.Logger {
 		if err != nil {
 			log.Printf("Failed to create Graylog core: %v", err)
 		} else {
-			graylogCore = httpx.WrapWithEndpointPrefix(graylogCore)
+			graylogCore = rpc.WrapWithEndpointPrefix(graylogCore)
 
 			cores = append(cores, graylogCore)
 			graylogEnabled = true
