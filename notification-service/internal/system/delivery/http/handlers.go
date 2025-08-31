@@ -1,7 +1,6 @@
 package http
 
 import (
-	"github.com/google/uuid"
 	"notification-service-api/internal/shared/rpc"
 	"notification-service-api/internal/shared/rpc/respond"
 	"notification-service-api/internal/system/delivery/http/dto"
@@ -14,10 +13,10 @@ func NewSystemHandler() *SystemHandler {
 	return &SystemHandler{}
 }
 
-func (h *SystemHandler) Ping(c *rpc.HttpCtx) {
+func (h *SystemHandler) Ping(c *rpc.HttpCtx, params dto.PingParams) (any, *respond.RPCError) {
 	c.Logger().Info("ping")
 	c.Logger().Warn("warn")
 	c.Logger().Error("error")
 
-	respond.OK(c, uuid.NewString(), dto.PingDTO{Pong: true})
+	return dto.PingDTO{Pong: true, Timestamp: params.Timestamp}, nil
 }

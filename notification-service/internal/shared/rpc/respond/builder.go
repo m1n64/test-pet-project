@@ -9,7 +9,7 @@ type Builder[T any] struct {
 	resp Response[T]
 }
 
-func New[T any](c Ctx, id ID) *Builder[T] {
+func New[T any](id ID) *Builder[T] {
 	return &Builder[T]{
 		id: id,
 		resp: Response[T]{
@@ -40,19 +40,30 @@ func (b *Builder[T]) Error(rpcCode RPCErrorCode, appCode, message string, detail
 	return b
 }
 
+func (b *Builder[T]) RawError() {
+
+}
+
 func (b *Builder[T]) JSON(c Ctx) {
-	if b.id == nil {
-		return
-	}
-
 	c.JSON(http.StatusOK, b.resp)
+}
 
+func (b *Builder[T]) GetResponse() Response[T] {
+	return b.resp
+}
+
+func BuildOK[T any](id ID, v T) Response[T] {
+	return New[T](id).Data(v).GetResponse()
+}
+
+func BuildFail(id ID, rpcCode RPCErrorCode, appCode, message string, details interface{}) Response[any] {
+	return New[any](id).Error(rpcCode, appCode, message, details).GetResponse()
 }
 
 func OK[T any](c Ctx, id ID, v T) {
-	New[T](c, id).Data(v).JSON(c)
+	New[T](id).Data(v).JSON(c)
 }
 
 func Fail(c Ctx, id ID, rpcCode RPCErrorCode, appCode, message string, details interface{}) {
-	New[struct{}](c, id).Error(rpcCode, appCode, message, details).JSON(c)
+	New[struct{}](id).Error(rpcCode, appCode, message, details).JSON(c)
 }
