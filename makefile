@@ -58,8 +58,8 @@ up:
 		if [ -f $$service/Makefile ]; then \
 			$(MAKE) -C $$service up || { echo "❌ Error on 'up' in $$service"; exit 1; }; \
 			if [ "$$service" = "shared" ]; then \
-				echo "⏳ Waiting 15s for $$service to be ready..."; \
-				sleep 15; \
+				echo "⏳ Waiting 20s for $$service to be ready..."; \
+				sleep 20; \
 			fi; \
 		else \
 			echo "⚠️  $$service: Makefile not found, skipping"; \

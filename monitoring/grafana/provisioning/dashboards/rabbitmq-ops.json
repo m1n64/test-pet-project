@@ -1,0 +1,436 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_INFLUXDB",
+      "label": "InfluxDB",
+      "type": "datasource",
+      "pluginId": "influxdb",
+      "pluginName": "InfluxDB"
+    }
+  ],
+  "title": "RabbitMQ Ops",
+  "uid": "rabbitmq-ops",
+  "version": 1,
+  "schemaVersion": 39,
+  "refresh": "10s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "tags": [
+    "rabbitmq",
+    "telegraf",
+    "influxdb",
+    "flux",
+    "pet-project"
+  ],
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Total Messages (all queues)",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "query": "\nfrom(bucket: \"monitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"rabbitmq_queue\" and r._field == \"messages\")\n  |> filter(fn: (r) => exists r.queue)\n  |> filter(fn: (r) => exists r.vhost and r.vhost =~ /${vhost:regex}/)\n  |> group(columns: [])\n  |> aggregateWindow(every: v.windowPeriod, fn: sum, createEmpty: false)\n",
+          "refId": "A",
+          "queryType": "flux",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "type": "table",
+      "title": "Top 10 Queues by Messages (last 5m)",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "query": "\nfrom(bucket: \"monitoring\")\n  |> range(start: -5m, stop: now())\n  |> filter(fn: (r) => r._measurement == \"rabbitmq_queue\" and r._field == \"messages\")\n  |> filter(fn: (r) => exists r.vhost and r.vhost =~ /${vhost:regex}/)\n  |> aggregateWindow(every: 1m, fn: last, createEmpty: false)\n  |> group(columns: [\"queue\"])\n  |> last()\n  |> sort(columns: [\"_value\"], desc: true)\n  |> limit(n: 10)\n",
+          "refId": "A",
+          "queryType": "flux",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Messages per Queue",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "query": "\nfrom(bucket: \"monitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"rabbitmq_queue\" and r._field == \"messages\")\n  |> filter(fn: (r) => exists r.vhost and r.vhost =~ /${vhost:regex}/)\n  |> group(columns: [\"queue\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n",
+          "refId": "A",
+          "queryType": "flux",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Backlog Growth d(messages)/dt (per queue)",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "query": "\nfrom(bucket: \"monitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"rabbitmq_queue\" and r._field == \"messages\")\n  |> filter(fn: (r) => exists r.vhost and r.vhost =~ /${vhost:regex}/)\n  |> group(columns: [\"queue\"])\n  |> derivative(unit: 1s, nonNegative: false)\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n",
+          "refId": "A",
+          "queryType": "flux",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Ready vs Unacked per Queue",
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "query": "\nfrom(bucket: \"monitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"rabbitmq_queue\" and (r._field == \"messages_ready\" or r._field == \"messages_unacknowledged\"))\n  |> filter(fn: (r) => exists r.vhost and r.vhost =~ /${vhost:regex}/)\n  |> group(columns: [\"queue\", \"_field\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n",
+          "refId": "A",
+          "queryType": "flux",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Consumers per Queue",
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "query": "\nfrom(bucket: \"monitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"rabbitmq_queue\" and r._field == \"consumers\")\n  |> filter(fn: (r) => exists r.vhost and r.vhost =~ /${vhost:regex}/)\n  |> group(columns: [\"queue\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n",
+          "refId": "A",
+          "queryType": "flux",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Exchange Publish Rate (per exchange)",
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "query": "\nfrom(bucket: \"monitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"rabbitmq_exchange\")\n  |> filter(fn: (r) => exists r.exchange and r.exchange =~ /${exchange:regex}/)\n  |> filter(fn: (r) => r._field =~ /publish/)\n  |> derivative(unit: 1s, nonNegative: true)\n  |> group(columns: [\"exchange\", \"_field\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n",
+          "refId": "A",
+          "queryType": "flux",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "type": "table",
+      "title": "Top 5 Exchanges by Publish Rate (last 5m)",
+      "gridPos": {
+        "x": 12,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "query": "\nfrom(bucket: \"monitoring\")\n  |> range(start: -5m, stop: now())\n  |> filter(fn: (r) => r._measurement == \"rabbitmq_exchange\")\n  |> filter(fn: (r) => exists r.exchange and r.exchange =~ /${exchange:regex}/)\n  |> filter(fn: (r) => r._field =~ /publish/)\n  |> derivative(unit: 1s, nonNegative: true)\n  |> aggregateWindow(every: 1m, fn: mean, createEmpty: false)\n  |> group(columns: [\"exchange\"])\n  |> last()\n  |> sort(columns: [\"_value\"], desc: true)\n  |> limit(n: 5)\n",
+          "refId": "A",
+          "queryType": "flux",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Overview: connections / channels / consumers / queues",
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "query": "\nfrom(bucket: \"monitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"rabbitmq_overview\")\n  |> filter(fn: (r) => r._field == \"connections\" or r._field == \"channels\" or r._field == \"consumers\" or r._field == \"queues\")\n  |> group(columns: [\"_field\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n",
+          "refId": "A",
+          "queryType": "flux",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Node Health (run_queue, proc_used, mem_used MiB)",
+      "gridPos": {
+        "x": 12,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "query": "mem = from(bucket: \"monitoring\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r._measurement == \"rabbitmq_node\" and r._field == \"mem_used\")\r\n  |> toFloat()\r\n  |> map(fn: (r) => ({ r with _value: r._value \/ 1048576.0, _field: \"mem_used_mib\" }))\r\n\r\ncpuq = from(bucket: \"monitoring\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r._measurement == \"rabbitmq_node\" and (r._field == \"run_queue\" or r._field == \"proc_used\"))\r\n  |> toFloat()\r\n\r\nunion(tables: [mem, cpuq])\r\n  |> group(columns: [\"node\", \"_field\"])\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+          "refId": "A",
+          "queryType": "flux",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB}"
+          },
+          "hide": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "type": "query",
+        "name": "vhost",
+        "label": "VHost",
+        "datasource": { "type": "influxdb", "uid": "YOUR_INFLUX_UID" },
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "refresh": 2,
+        "query": {
+          "query": "import \"influxdata/influxdb/schema\"\nschema.measurementTagValues(bucket: \"monitoring\", measurement: \"rabbitmq_queue\", tag: \"vhost\")",
+          "refId": "VHOST",
+          "queryType": "flux"
+        },
+        "current": { "selected": false, "text": "All", "value": ["$__all"] }
+      },
+      {
+        "type": "query",
+        "name": "exchange",
+        "label": "Exchange",
+        "datasource": { "type": "influxdb", "uid": "YOUR_INFLUX_UID" },
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "refresh": 2,
+        "query": {
+          "query": "import \"influxdata/influxdb/schema\"\nschema.measurementTagValues(bucket: \"monitoring\", measurement: \"rabbitmq_exchange\", tag: \"exchange\")",
+          "refId": "EXC",
+          "queryType": "flux"
+        },
+        "current": { "selected": false, "text": "All", "value": ["$__all"] }
+      }
+    ]
+  }
+}

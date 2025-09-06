@@ -30,7 +30,7 @@ services:
     depends_on: [mongo, opensearch]
     environment:
       GRAYLOG_PASSWORD_SECRET: ${GRAYLOG_PASSWORD_SECRET}
-      # echo -n admin | sha256sum  (на Mac: shasum -a 256)
+      # echo -n admin | sha256sum  (for Mac: shasum -a 256)
       GRAYLOG_ROOT_PASSWORD_SHA2: ${GRAYLOG_ROOT_PASSWORD_SHA2}
       GRAYLOG_HTTP_EXTERNAL_URI: "http://localhost:9000/"
       GRAYLOG_ELASTICSEARCH_HOSTS: "http://opensearch:9200"
@@ -45,10 +45,99 @@ services:
     networks:
       - pet-project-first-network
 
+  influxdb:
+    image: influxdb:2.7
+    container_name: monitoring-influxdb
+    ports:
+      - "${INFLUX_HTTP_PORT}:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUX_INIT_USERNAME}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUX_INIT_PASSWORD}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUX_INIT_ORG}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUX_INIT_BUCKET}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUX_INIT_TOKEN}
+    volumes:
+      - monitoring_influxdb-data:/var/lib/influxdb2
+      - monitoring_influxdb-config:/etc/influxdb2
+    healthcheck:
+      test: ["CMD", "influxd", "version"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - pet-project-first-network
+
+  telegraf:
+    image: telegraf:1.30
+    container_name: monitoring-telegraf
+    depends_on:
+      - influxdb
+    ports:
+      - "${TELEGRAF_UDP_PORT}:8090/udp"
+    command:
+      - --config
+      - /etc/telegraf/telegraf.conf
+      - --config-directory
+      - /etc/telegraf/telegraf.d  
+    environment:
+      HOSTNAME: telegraf
+      HOST_PROC: /host/proc
+      HOST_SYS: /host/sys
+      HOST_ETC: /host/etc
+      INFLUX_URL: http://influxdb:8086
+      INFLUX_TOKEN: ${INFLUX_INIT_TOKEN}
+      INFLUX_ORG: ${INFLUX_INIT_ORG}
+      INFLUX_BUCKET: ${INFLUX_INIT_BUCKET}
+      RABBIT_MQ_HOST: ${RABBITMQ_HOST}
+      RABBIT_MQ_USER: ${RABBITMQ_USER}
+      RABBIT_MQ_PASS: ${RABBITMQ_PASS}
+    volumes:
+      - ./configs/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - ./configs/telegraf.d:/etc/telegraf/telegraf.d:ro
+    networks:
+      - pet-project-first-network
+    
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: monitoring-grafana
+    depends_on: [influxdb]
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USERNAME:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin123}
+      INFLUX_URL: http://influxdb:8086
+      INFLUX_TOKEN: ${INFLUX_INIT_TOKEN}
+      INFLUX_ORG: ${INFLUX_INIT_ORG}
+      INFLUX_BUCKET: ${INFLUX_INIT_BUCKET}
+    ports:
+      - "3000:3000"
+    volumes:
+      - monitor_grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+    networks:
+      - pet-project-first-network
+
+  docker-socket-proxy:
+    image: ghcr.io/tecnativa/docker-socket-proxy:latest
+    container_name: docker-socket-proxy
+    environment:
+      CONTAINERS: 1
+      INFO: 1
+      VERSION: 1
+      EVENTS: 1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - pet-project-first-network
+
 volumes:
   monitor_mongo_data:
   monitor_graylog_data:
   monitor_opensearch_data:
+  monitoring_influxdb-data:
+  monitoring_influxdb-config:
+  monitor_grafana_data:
 
 networks:
   pet-project-first-network:
