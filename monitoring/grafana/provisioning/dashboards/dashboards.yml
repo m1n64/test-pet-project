@@ -11,7 +11,7 @@ providers:
       path: /etc/grafana/provisioning/dashboards
   
   - name: 'rabbitmq-ops'
-    orgId: 2
+    orgId: 1
     folder: ''
     type: file
     disableDeletion: false
