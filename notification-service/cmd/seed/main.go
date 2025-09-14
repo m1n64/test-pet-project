@@ -12,4 +12,7 @@ func init() {
 
 func main() {
 	dependencies.Logger.Info("Successfully seeded")
+
+	defer dependencies.Redis.Close()
+	defer dependencies.RabbitMQ.Close()
 }

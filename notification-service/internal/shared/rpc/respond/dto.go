@@ -14,6 +14,7 @@ const (
 	MethodNotFound RPCErrorCode = -32601
 	InvalidParams  RPCErrorCode = -32602
 	InternalError  RPCErrorCode = -32603
+	AuthError      RPCErrorCode = -32003
 )
 
 func (c RPCErrorCode) String() string {

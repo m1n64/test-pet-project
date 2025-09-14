@@ -14,9 +14,5 @@ func NewSystemHandler() *SystemHandler {
 }
 
 func (h *SystemHandler) Ping(c *rpc.HttpCtx, params dto.PingParams) (any, *respond.RPCError) {
-	c.Logger().Info("ping")
-	c.Logger().Warn("warn")
-	c.Logger().Error("error")
-
 	return dto.PingDTO{Pong: true, Timestamp: params.Timestamp}, nil
 }

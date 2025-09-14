@@ -9,7 +9,6 @@ import (
 	"go.uber.org/zap"
 	"notification-service-api/internal/notifications/delivery/rpc/dto"
 	"notification-service-api/internal/notifications/domain/entity"
-	"notification-service-api/internal/shared/queue"
 	"notification-service-api/internal/shared/queue/notifications"
 	"notification-service-api/pkg/utils"
 	"time"
@@ -58,20 +57,13 @@ func (s *TelegramService) EnqueueTelegram(ctx context.Context, correlationID str
 
 	s.logger.Info(fmt.Sprintf("Telegram notification: %v, ID: %s", tgEvent, notificationID.String()))
 
-	ch, err := s.rabbitMQ.Channel()
-	if err != nil {
-		s.logger.Error("failed to open channel", zap.Error(err))
-		return uuid.Nil, err
-	}
-	defer ch.Close()
-
 	eventBinary, err := msgpack.Marshal(tgEvent)
 	if err != nil {
 		s.logger.Error("failed to encode telegram notification", zap.Error(err))
 		return uuid.Nil, err
 	}
 
-	err = queue.Publish(ch, notifications.RoutingTelegramSend, eventBinary, amqp.Table{}, &correlationID)
+	err = s.rabbitMQ.PublishMsgpack(ctx, notifications.ExchangeNotifications, notifications.RoutingTelegramSend, eventBinary, amqp.Table{}, &correlationID)
 	if err != nil {
 		s.logger.Error("failed to enqueue telegram notification", zap.Error(err))
 		return uuid.Nil, err

@@ -88,6 +88,7 @@ func InitLogs() *zap.Logger {
 	host, _ := os.Hostname()
 
 	logger = logger.With(
+		zap.String("level_name", logger.Level().String()),
 		zap.String("env", os.Getenv("SERVICE_ENV")),
 		zap.String("gin_mode", os.Getenv("GIN_MODE")),
 		zap.String("container_id", host),
@@ -97,7 +98,7 @@ func InitLogs() *zap.Logger {
 		logger.Info("logging initialized",
 			zap.String("sink", "stdout+graylog"),
 			zap.String("graylog_addr", graylogAddr),
-			zap.String("level", level.Level().String()),
+			zap.String("level_name", level.Level().String()),
 		)
 
 		logger.Info("GRAYLOG_SMOKE_TEST", zap.String("marker", "zap-gelf"))

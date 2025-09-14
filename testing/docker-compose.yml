@@ -1,0 +1,15 @@
+services:
+  k6:
+    image: grafana/k6:0.51.0
+    container_name: testing-k6
+    environment:
+      BASE_URL: "http://notify-app:8000"
+      TIMEOUT: "30000"
+    volumes:
+      - ./scripts:/scripts:ro
+    networks:
+      - pet-project-first-network
+
+networks:
+  pet-project-first-network:
+    external: true

@@ -22,6 +22,8 @@ type Dependencies struct {
 	Validator       *validator.Validate
 	Registry        *rpc.Registry
 	TelegramService *app.TelegramService
+	Config          *utils.Config
+	Influx          *utils.InfluxDB
 }
 
 func InitDependencies() *Dependencies {
@@ -52,6 +54,15 @@ func InitDependencies() *Dependencies {
 		logger.Fatal(fmt.Sprintf("Failed to open channel: %v", err))
 	}
 
+	logger.Info("Init configuration")
+	config := utils.LoadConfig()
+
+	logger.Info("Init InfluxDB")
+	influx, err := utils.InitInfluxUDP(os.Getenv("INFLUX_UDP_HOST"))
+	if err != nil {
+		logger.Fatal("Error InfluxDB connection")
+	}
+
 	validate := utils.InitValidator()
 
 	registry := rpc.NewRegistry()
@@ -69,5 +80,7 @@ func InitDependencies() *Dependencies {
 		Validator:       validate,
 		Registry:        registry,
 		TelegramService: tgService,
+		Config:          config,
+		Influx:          influx,
 	}
 }

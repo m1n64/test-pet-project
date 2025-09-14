@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// Publish deprecated
 func Publish(ch *amqp.Channel, routingKey string, body []byte, headers amqp.Table, correlationID *string) error {
 	return ch.Publish(
 		notifications.ExchangeNotifications,

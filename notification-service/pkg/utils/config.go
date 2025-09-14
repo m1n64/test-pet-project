@@ -5,6 +5,24 @@ import (
 	"os"
 )
 
+type Config struct {
+	IsSecure    bool
+	MasterToken string
+}
+
+func LoadConfig() *Config {
+	isSecure := os.Getenv("IS_SECURE") == "true"
+	masterToken := os.Getenv("MASTER_TOKEN")
+	if masterToken == "" {
+		GetLogger().Sugar().Warn("MASTER_TOKEN is not set")
+	}
+
+	return &Config{
+		IsSecure:    isSecure,
+		MasterToken: masterToken,
+	}
+}
+
 func LoadEnv() {
 	err := godotenv.Load()
 	if err != nil {
