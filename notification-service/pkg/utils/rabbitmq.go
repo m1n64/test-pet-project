@@ -25,13 +25,15 @@ type RabbitMQConnection struct {
 type HandlerFunc func(ctx context.Context, d amqp.Delivery) error
 
 type ConsumeOptions struct {
-	Queue        string
-	Workers      int
-	Prefetch     int
-	ConsumerTag  string
-	Args         amqp.Table
-	RetryBackoff time.Duration
-	RetryMax     int
+	Queue           string
+	Workers         int
+	Prefetch        int
+	ConsumerTag     string
+	Args            amqp.Table
+	RetryBackoff    time.Duration
+	RetryMax        int64
+	RetryRoutingKey string
+	DLQRoutingKey   string
 }
 
 var (
@@ -330,10 +332,19 @@ func (r *RabbitMQConnection) runConsumerWorker(
 				}
 				attempts := getRetryCount(d.Headers) + 1
 
-				// TODO: finish DLQ and Retry queues
 				if err := handler(ctx, d); err != nil {
-					if attempts >= int64(opts.RetryMax) {
-						pubErr := r.Publish(ctx, notifications.ExchangeDLX, opts.Queue+".dlq", amqp.Publishing{
+					if opts.RetryRoutingKey == "" && opts.DLQRoutingKey == "" {
+						_ = d.Ack(false)
+						localLogger.Error(
+							fmt.Sprintf("[consumer:%d] handler failed: drop (retry & DLQ disabled)", workerID),
+							zap.Int64("attempts", attempts),
+							zap.Error(err),
+						)
+						continue
+					}
+
+					if attempts >= opts.RetryMax {
+						pubErr := r.Publish(ctx, notifications.ExchangeDLX, opts.DLQRoutingKey, amqp.Publishing{
 							DeliveryMode:  amqp.Persistent,
 							ContentType:   d.ContentType,
 							Body:          d.Body,
@@ -353,7 +364,7 @@ func (r *RabbitMQConnection) runConsumerWorker(
 						continue
 					}
 
-					pubErr := r.Publish(ctx, notifications.ExchangeRetry, opts.Queue+".retry", amqp.Publishing{
+					pubErr := r.Publish(ctx, notifications.ExchangeRetry, opts.RetryRoutingKey, amqp.Publishing{
 						DeliveryMode:  amqp.Persistent,
 						ContentType:   d.ContentType,
 						Body:          d.Body,

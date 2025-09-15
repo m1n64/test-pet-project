@@ -17,4 +17,13 @@ const (
 	DeadQueueEmail    = "notifications.email.dlq"
 	DeadQueueSMS      = "notifications.sms.dlq"
 	DeadQueueTelegram = "notifications.telegram.dlq"
+
+	RoutingEmailSendRetry = RoutingEmailSend + ".retry"
+	RoutingEmailSendDLQ   = RoutingEmailSend + ".dlq"
+
+	RoutingSMSSendRetry = RoutingSMSSend + ".retry"
+	RoutingSMSSendDLQ   = RoutingSMSSend + ".dlq"
+
+	RoutingTelegramSendRetry = RoutingTelegramSend + ".retry"
+	RoutingTelegramSendDLQ   = RoutingTelegramSend + ".dlq"
 )

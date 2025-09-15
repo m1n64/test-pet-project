@@ -16,12 +16,14 @@ func StartTelegramConsumers(dependencies *di.Dependencies) {
 	handler := NewTelegramHandler(dependencies.Logger, dependencies.TelegramService)
 
 	err := dependencies.RabbitMQ.Consume(ctx, utils.ConsumeOptions{
-		Queue:        notifications.QueueTelegram,
-		Workers:      5,
-		Prefetch:     5,
-		Args:         amqp.Table{},
-		RetryBackoff: 30 * time.Second,
-		RetryMax:     3,
+		Queue:           notifications.QueueTelegram,
+		Workers:         5,
+		Prefetch:        5,
+		Args:            amqp.Table{},
+		RetryBackoff:    30 * time.Second,
+		RetryMax:        3,
+		RetryRoutingKey: notifications.RoutingTelegramSendRetry,
+		DLQRoutingKey:   notifications.RoutingTelegramSendDLQ,
 	}, handler.Handle)
 	if err != nil {
 		dependencies.Logger.Error("failed to register telegram consumer", zap.Error(err))
