@@ -41,7 +41,7 @@ func InitDependencies() *Dependencies {
 	utils.InitMigrations(dbConn)
 
 	logger.Info("Init RabbitMQ")
-	rabbitmqConn := utils.ConnectRabbitMQ(os.Getenv("RABBITMQ_URL"))
+	rabbitmqConn := utils.ConnectRabbitMQ(os.Getenv("RABBITMQ_URL"), logger)
 
 	ch, err := rabbitmqConn.Channel()
 	if err != nil {

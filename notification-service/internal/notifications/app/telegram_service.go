@@ -15,7 +15,7 @@ import (
 )
 
 type TelegramPort interface {
-	Send(ctx context.Context, payload []byte) error
+	Send(ctx context.Context, to string, message string, parseMode string) error
 }
 
 type TelegramService struct {
@@ -41,7 +41,7 @@ func (s *TelegramService) EnqueueTelegram(ctx context.Context, correlationID str
 
 	s.logger.Info(fmt.Sprintf("Start sending tg notification to queue, ID: %s", notificationID.String()))
 
-	parseMode := "markdown"
+	parseMode := "Markdown"
 	if req.ParseMode != nil {
 		parseMode = *req.ParseMode
 	}
@@ -72,4 +72,16 @@ func (s *TelegramService) EnqueueTelegram(ctx context.Context, correlationID str
 	s.logger.Info(fmt.Sprintf("Telegram notification sent successfully, ID: %s", notificationID.String()))
 
 	return notificationID, nil
+}
+
+func (s *TelegramService) SendNotification(ctx context.Context, notification *entity.TelegramNotification) error {
+	s.logger.Info(fmt.Sprintf("Sending notification to Telegram, ID: %s", notification.NotificationID.String()))
+	err := s.TG.Send(ctx, notification.To, notification.Payload, notification.ParseMode)
+	if err != nil {
+		s.logger.Error("failed to send notification to telegram", zap.Error(err))
+		return err
+	}
+
+	s.logger.Info(fmt.Sprintf("Notification sent to telegram successfully, ID: %s", notification.NotificationID.String()))
+	return nil
 }

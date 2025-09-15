@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"notification-service-api/internal/notifications/delivery/queue"
 	rpc2 "notification-service-api/internal/notifications/delivery/rpc"
 	"notification-service-api/internal/shared/rpc"
 	"notification-service-api/internal/shared/rpc/handlers"
@@ -43,6 +44,8 @@ func main() {
 	r.POST("/rpc", rpc.Wrap(rpcHandler.MainRPCHandler))
 
 	srv := &http.Server{Addr: ":8000", Handler: r}
+
+	go queue.StartTelegramConsumers(dependencies)
 
 	go func() {
 		fmt.Println("Server started on port 8000")

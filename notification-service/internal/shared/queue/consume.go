@@ -4,11 +4,11 @@ import (
 	"context"
 	"github.com/streadway/amqp"
 	"log"
+	"notification-service-api/pkg/utils"
 )
 
-type HandlerFunc func(ctx context.Context, d amqp.Delivery) error
-
-func Consume(ctx context.Context, ch *amqp.Channel, queue string, workers int, handler HandlerFunc) error {
+// Consume deprecated
+func Consume(ctx context.Context, ch *amqp.Channel, queue string, workers int, handler utils.HandlerFunc) error {
 	if err := ch.Qos(workers, 0, false); err != nil {
 		return err
 	}
