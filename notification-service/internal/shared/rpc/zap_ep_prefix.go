@@ -55,6 +55,9 @@ func (c *epPrefixCore) Write(e zapcore.Entry, fields []zapcore.Field) error {
 		if c.endpoint != "" {
 			parts = append(parts, c.endpoint)
 		}
+		if e.Level.String() != "" {
+			parts = append(parts, e.Level.CapitalString())
+		}
 		if c.requestID != "" {
 			parts = append(parts, c.requestID)
 		}
