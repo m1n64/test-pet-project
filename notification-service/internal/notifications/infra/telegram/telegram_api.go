@@ -36,7 +36,7 @@ func NewTGApiClient() *TGApi {
 	}
 }
 
-func (t *TGApi) Send(ctx context.Context, to string, message string, parseMode string) error {
+func (t *TGApi) SendMessage(ctx context.Context, to string, message string, parseMode string) error {
 	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", t.token)
 
 	reqBody, err := json.Marshal(sendMessageRequest{

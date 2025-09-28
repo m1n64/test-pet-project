@@ -7,6 +7,8 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 	"notification-service-api/internal/notifications/app"
+	"notification-service-api/internal/notifications/infra/email"
+	"notification-service-api/internal/notifications/infra/monitoring"
 	"notification-service-api/internal/notifications/infra/telegram"
 	"notification-service-api/internal/shared/queue"
 	"notification-service-api/internal/shared/rpc"
@@ -15,15 +17,18 @@ import (
 )
 
 type Dependencies struct {
-	Logger          *zap.Logger
-	Redis           *redis.Client
-	DB              *gorm.DB
-	RabbitMQ        *utils.RabbitMQConnection
-	Validator       *validator.Validate
-	Registry        *rpc.Registry
-	TelegramService *app.TelegramService
-	Config          *utils.Config
-	Influx          *utils.InfluxDB
+	Logger           *zap.Logger
+	Redis            *redis.Client
+	DB               *gorm.DB
+	RabbitMQ         *utils.RabbitMQConnection
+	Validator        *validator.Validate
+	Registry         *rpc.Registry
+	TelegramService  *app.TelegramService
+	EmailService     *app.EmailService
+	Config           *utils.Config
+	Influx           *utils.InfluxDB
+	InfluxMonitoring *monitoring.InfluxMonitoring
+	SMTPClient       *utils.SMTPClient
 }
 
 func InitDependencies() *Dependencies {
@@ -63,24 +68,43 @@ func InitDependencies() *Dependencies {
 		logger.Fatal("Error InfluxDB connection")
 	}
 
+	logger.Info("Init SMTP")
+	smtpClient := utils.NewSMTPClient(
+		os.Getenv("SMTP_HOST"),
+		os.Getenv("SMTP_PORT"),
+		os.Getenv("SMTP_TLS_MODE"),
+		os.Getenv("SMTP_USERNAME"),
+		os.Getenv("SMTP_PASSWORD"),
+		os.Getenv("FROM_DEFAULT"),
+		logger,
+	)
+
 	validate := utils.InitValidator()
 
 	registry := rpc.NewRegistry()
 
+	influxMonitoring := monitoring.NewInfluxMonitoring(influx, logger, os.Getenv("SERVICE_ENV"))
+
 	tgApi := telegram.NewTGApiClient()
-	tgService := app.NewTelegramService(tgApi, rabbitmqConn)
+	tgService := app.NewTelegramService(tgApi, rabbitmqConn, influxMonitoring)
+
+	emailApi := email.NewEmailAPI(smtpClient)
+	emailService := app.NewEmailService(emailApi, rabbitmqConn, influxMonitoring)
 
 	logger.Info("Init dependencies successfully")
 
 	return &Dependencies{
-		Logger:          logger,
-		Redis:           redisConn,
-		DB:              dbConn,
-		RabbitMQ:        rabbitmqConn,
-		Validator:       validate,
-		Registry:        registry,
-		TelegramService: tgService,
-		Config:          config,
-		Influx:          influx,
+		Logger:           logger,
+		Redis:            redisConn,
+		DB:               dbConn,
+		RabbitMQ:         rabbitmqConn,
+		Validator:        validate,
+		Registry:         registry,
+		TelegramService:  tgService,
+		EmailService:     emailService,
+		Config:           config,
+		Influx:           influx,
+		InfluxMonitoring: influxMonitoring,
+		SMTPClient:       smtpClient,
 	}
 }

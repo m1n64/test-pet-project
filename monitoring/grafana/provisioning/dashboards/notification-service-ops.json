@@ -17,9 +17,68 @@
   "time": { "from": "now-6h", "to": "now" },
   "panels": [
     {
+      "type": "stat",
+      "title": "Total sent (success)",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 4 },
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 0 } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [
+        {
+          "query": "from(bucket: \"monitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"notification_stats\" and r._field == \"total\" and r.type == \"success\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n  |> increase()\n  |> group(columns: [\"_time\"])           // суммируем все instance\n  |> sum(column: \"_value\")\n  |> aggregateWindow(every: inf, fn: last) // одна точка для stat"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Total failed (error)",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 4 },
+        "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "red"
+          }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [
+        {
+          "query": "from(bucket: \"monitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"notification_stats\" and r._field == \"total\" and r.type == \"error\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n  |> increase()\n  |> group(columns: [\"_time\"])           // суммируем все instance\n  |> sum(column: \"_value\")\n  |> aggregateWindow(every: inf, fn: last) // одна точка для stat"
+        }
+      ]
+    },
+
+    {
+      "type": "barchart",
+      "title": "Sent by channel (type=success, stacked)",
+      "gridPos": { "x": 0, "y": 4, "w": 24, "h": 8 },
+      "options": { "legend": { "showLegend": true }, "displayMode": "gradient", "stacking": "normal" },
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 0 } },
+      "targets": [
+        {
+          "query": "from(bucket: \"monitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"notification_stats\" and r._field == \"total\" and r.type == \"success\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n  |> increase()\n  |> group(columns: [\"channel\",\"_time\"]) // суммируем все instance в рамках времени и канала\n  |> sum(column: \"_value\")\n  |> group(columns: [\"channel\"])          // серии по channel (stack)"
+        }
+      ]
+    },
+    {
+      "type": "barchart",
+      "title": "Failed by channel (type=error, stacked)",
+      "gridPos": { "x": 0, "y": 12, "w": 24, "h": 8 },
+      "options": { "legend": { "showLegend": true }, "displayMode": "gradient", "stacking": "normal" },
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 0 } },
+      "targets": [
+        {
+          "query": "from(bucket: \"monitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"notification_stats\" and r._field == \"total\" and r.type == \"error\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n  |> increase()\n  |> group(columns: [\"channel\",\"_time\"]) // суммируем все instance в рамках времени и канала\n  |> sum(column: \"_value\")\n  |> group(columns: [\"channel\"])          // серии по channel (stack)"
+        }
+      ]
+    },
+
+    {
       "type": "timeseries",
       "title": "RPS (1s)",
-      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "gridPos": { "x": 0, "y": 20, "w": 12, "h": 8 },
       "fieldConfig": { "defaults": { "unit": "req/s" } },
       "targets": [
         {
@@ -30,7 +89,7 @@
     {
       "type": "timeseries",
       "title": "RPM (1m)",
-      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "gridPos": { "x": 12, "y": 20, "w": 12, "h": 8 },
       "fieldConfig": { "defaults": { "unit": "req/min" } },
       "targets": [
         {
@@ -41,7 +100,7 @@
     {
       "type": "timeseries",
       "title": "Latency p95",
-      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "gridPos": { "x": 0, "y": 28, "w": 12, "h": 8 },
       "fieldConfig": { "defaults": { "unit": "ms" } },
       "targets": [
         {
@@ -52,7 +111,7 @@
     {
       "type": "timeseries",
       "title": "Latency p99",
-      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "gridPos": { "x": 12, "y": 28, "w": 12, "h": 8 },
       "fieldConfig": { "defaults": { "unit": "ms" } },
       "targets": [
         {
@@ -63,7 +122,7 @@
     {
       "type": "timeseries",
       "title": "Bytes written per minute",
-      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
+      "gridPos": { "x": 0, "y": 36, "w": 12, "h": 8 },
       "fieldConfig": { "defaults": { "unit": "bytes" } },
       "targets": [
         {
@@ -74,7 +133,7 @@
     {
       "type": "timeseries",
       "title": "In-flight requests",
-      "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
+      "gridPos": { "x": 12, "y": 36, "w": 12, "h": 8 },
       "targets": [
         {
           "query": "from(bucket: \"monitoring\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"notification_rpc\" and r._field == \"inflight\")\n  |> aggregateWindow(every: 10s, fn: mean)\n  |> yield(name: \"inflight\")"

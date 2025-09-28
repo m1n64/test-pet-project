@@ -42,7 +42,7 @@ func InitLogs() *zap.Logger {
 
 	config := zap.NewProductionConfig()
 	config.OutputPaths = []string{
-		"stdout",
+		//"stdout",
 	}
 
 	encCfg := zap.NewProductionEncoderConfig()

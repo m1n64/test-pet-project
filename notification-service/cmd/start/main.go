@@ -31,21 +31,31 @@ func main() {
 
 	r := gin.Default()
 
-	r.Use(middlewares.LoggingContextMiddleware(dependencies.Logger))
-	r.Use(middlewares.AccessLogMiddleware())
-	r.Use(middlewares.AuthMiddleware(dependencies.Config, dependencies.Logger))
-	r.Use(middlewares.StatisticsMiddleware(dependencies.Influx, dependencies.Logger))
+	publicGroup := r.Group("")
+
+	publicGroup.GET("/", func(c *gin.Context) {
+		c.Header("Content-Type", "text/html; charset=utf-8")
+		c.File("html/docs.html")
+	})
+
+	rpcGroup := r.Group("")
+
+	rpcGroup.Use(middlewares.LoggingContextMiddleware(dependencies.Logger))
+	rpcGroup.Use(middlewares.AccessLogMiddleware())
+	rpcGroup.Use(middlewares.AuthMiddleware(dependencies.Config, dependencies.Logger))
+	rpcGroup.Use(middlewares.StatisticsMiddleware(dependencies.Influx, dependencies.Logger))
 
 	systemRpc.InitSystemProcedures(dependencies)
 	rpc2.InitNotificationProcedures(dependencies)
 
 	rpcHandler := handlers.NewRPCHandler(dependencies.Registry)
 
-	r.POST("/rpc", rpc.Wrap(rpcHandler.MainRPCHandler))
+	rpcGroup.POST("/rpc", rpc.Wrap(rpcHandler.MainRPCHandler))
 
 	srv := &http.Server{Addr: ":8000", Handler: r}
 
 	go queue.StartTelegramConsumers(dependencies)
+	go queue.StartEmailConsumers(dependencies)
 
 	go func() {
 		fmt.Println("Server started on port 8000")

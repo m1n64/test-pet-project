@@ -21,6 +21,26 @@ services:
     networks:
       - pet-project-first-network
 
+  mailpit:
+    image: ghcr.io/axllent/mailpit:latest
+    container_name: shared-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    environment:
+      MP_MAX_MESSAGES: 10000
+      MP_MESSAGE_RETENTION: 168h 
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8025/api/v1/info"]
+      interval: 10s
+      timeout: 2s
+      retries: 10
+    networks:
+      - pet-project-first-network
+
 volumes:
   rabbitmq_data:
   rabbitmq_log:

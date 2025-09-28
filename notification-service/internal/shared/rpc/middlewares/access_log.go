@@ -2,7 +2,9 @@ package middlewares
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/goccy/go-json"
 	"go.uber.org/zap"
 	"io"
 	"mime"
@@ -14,7 +16,9 @@ import (
 	"time"
 )
 
-const maxBodyLogBytes = 2048
+const (
+	maxBodyLogBytes = 2048
+)
 
 type bodyCaptureWriter struct {
 	gin.ResponseWriter
@@ -77,15 +81,13 @@ func snapshotRequestBody(r *http.Request) string {
 
 	switch mt {
 	case "application/json", "text/plain", "":
-		limited := io.LimitReader(r.Body, maxBodyLogBytes+1)
-		b, _ := io.ReadAll(limited)
+		b, _ := io.ReadAll(r.Body)
 		_ = r.Body.Close()
 		r.Body = io.NopCloser(bytes.NewBuffer(b))
-		return truncateForLog(b)
 
-	case "application/x-www-form-urlencoded":
-		_ = r.ParseForm()
-		return truncateForLog([]byte(redactQuery(r.Form).Encode()))
+		// TODO: mask attachment base64 with good performance
+		return maskAttachmentBase64(b)
+		/*return truncateForLog(b)*/
 
 	default:
 		return ""
@@ -127,4 +129,38 @@ func redactQuery(v url.Values) url.Values {
 		out[k] = vals
 	}
 	return out
+}
+
+func maskAttachmentBase64(b []byte) string {
+	var raw map[string]any
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return truncateForLog(b)
+	}
+
+	maskBase64Fields(raw)
+
+	out, err := json.Marshal(raw)
+	if err != nil {
+		return truncateForLog(b)
+	}
+	return truncateForLog(out)
+}
+
+func maskBase64Fields(v any) {
+	switch vv := v.(type) {
+	case map[string]any:
+		for k, val := range vv {
+			if strings.EqualFold(k, "data") {
+				if s, ok := val.(string); ok && len(s) > 200 {
+					vv[k] = fmt.Sprintf("<skipped, base64, size=%d bytes>", len(s))
+				}
+			} else {
+				maskBase64Fields(val)
+			}
+		}
+	case []any:
+		for _, el := range vv {
+			maskBase64Fields(el)
+		}
+	}
 }

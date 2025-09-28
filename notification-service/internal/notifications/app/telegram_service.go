@@ -8,6 +8,7 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 	"go.uber.org/zap"
 	"notification-service-api/internal/notifications/delivery/rpc/dto"
+	"notification-service-api/internal/notifications/domain"
 	"notification-service-api/internal/notifications/domain/entity"
 	"notification-service-api/internal/shared/queue/notifications"
 	"notification-service-api/pkg/utils"
@@ -15,19 +16,21 @@ import (
 )
 
 type TelegramPort interface {
-	Send(ctx context.Context, to string, message string, parseMode string) error
+	SendMessage(ctx context.Context, to string, message string, parseMode string) error
 }
 
 type TelegramService struct {
-	TG       TelegramPort
-	rabbitMQ *utils.RabbitMQConnection
-	logger   *zap.Logger
+	tg         TelegramPort
+	rabbitMQ   *utils.RabbitMQConnection
+	logger     *zap.Logger
+	monitoring domain.NotificationMonitoring
 }
 
-func NewTelegramService(t TelegramPort, rabbitMQ *utils.RabbitMQConnection) *TelegramService {
+func NewTelegramService(t TelegramPort, rabbitMQ *utils.RabbitMQConnection, monitoring domain.NotificationMonitoring) *TelegramService {
 	return &TelegramService{
-		TG:       t,
-		rabbitMQ: rabbitMQ,
+		tg:         t,
+		rabbitMQ:   rabbitMQ,
+		monitoring: monitoring,
 	}
 }
 
@@ -76,12 +79,14 @@ func (s *TelegramService) EnqueueTelegram(ctx context.Context, correlationID str
 
 func (s *TelegramService) SendNotification(ctx context.Context, notification *entity.TelegramNotification) error {
 	s.logger.Info(fmt.Sprintf("Sending notification to Telegram, ID: %s", notification.NotificationID.String()))
-	err := s.TG.Send(ctx, notification.To, notification.Payload, notification.ParseMode)
+	err := s.tg.SendMessage(ctx, notification.To, notification.Payload, notification.ParseMode)
 	if err != nil {
+		s.monitoring.SendError(domain.ChannelTelegram, 1)
 		s.logger.Error("failed to send notification to telegram", zap.Error(err))
 		return err
 	}
 
+	s.monitoring.SendSuccess(domain.ChannelTelegram, 1)
 	s.logger.Info(fmt.Sprintf("Notification sent to telegram successfully, ID: %s", notification.NotificationID.String()))
 	return nil
 }

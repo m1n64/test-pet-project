@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Notification Service API Docs</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"> <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script> <script>hljs.highlightAll();</script>
+  <style>
+    body { font-family: sans-serif; max-width: 900px; margin: auto; line-height: 1.5; }
+    table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+    th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
+    th { background: #f5f5f5; }
+    pre { background: #f9f9f9; padding: 8px; border: 1px solid #ddd; }
+  </style>
+</head>
+<body>
+<h1>Notification Service API</h1>
+<p>Simple service for notifications.</p>
+
+<h2>JSON-RPC Standard</h2>
+<p>All requests follow the <a href="https://www.jsonrpc.org/specification" target="_blank">JSON-RPC 2.0</a> specification.</p>
+
+<h3>Request format</h3>
+<pre>
+  <code class="json">Example:
+{
+  "jsonrpc": "2.0",
+  "method": "procedure.name",
+  "params": { ... },
+  "id": 1
+}
+  </code>
+  </pre>
+
+<h3>Response format</h3>
+<pre>
+  <code class="json">Example:
+{
+  "jsonrpc": "2.0",
+  "result": { ... },
+  "id": 1
+}
+    </code>
+  </pre>
+
+<h3>Error format</h3>
+<pre>
+  <code class="json">Example:
+{
+  "jsonrpc": "2.0",
+  "error": {
+    "code": -32000,
+    "message": "Error message",
+    "data": { ... }
+  },
+  "id": 1
+}
+    </code>
+  </pre>
+
+<h3>Batch requests</h3>
+<p>You can send multiple requests in a single array:</p>
+<pre>
+  <code class="json">Example:
+  [
+  { "jsonrpc": "2.0", "method": "email.send", "params": {...}, "id": 1 },
+  { "jsonrpc": "2.0", "method": "telegram.send", "params": {...}, "id": 2 }
+]
+  </code>
+  </pre>
+
+<hr>
+
+<h2>Procedures</h2>
+
+<h3>1. <code>email.send</code></h3>
+<p>Send an email.</p>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td>to</td><td>string | []string</td><td>Recipient(s)</td></tr>
+  <tr><td>subject</td><td>string</td><td>Email subject</td></tr>
+  <tr><td>body</td><td>string</td><td>Email body</td></tr>
+  <tr><td>content_type</td><td>string</td><td><code>text/plain</code> or <code>text/html</code></td></tr>
+  <tr><td>from</td><td>string|null</td><td>Sender (nullable, defaults to config)</td></tr>
+  <tr><td>cc</td><td>[]string</td><td>Carbon copy recipients</td></tr>
+  <tr><td>attachments</td><td>[]object</td><td>List of attachments</td></tr>
+</table>
+
+<p><b>Attachment fields:</b></p>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td>filename</td><td>string</td><td>File name</td></tr>
+  <tr><td>content_type</td><td>string</td><td>MIME type (e.g. <code>image/jpeg</code>)</td></tr>
+  <tr><td>data</td><td>string</td><td>File contents as base64</td></tr>
+</table>
+
+<h3>2. <code>telegram.send</code></h3>
+<p>Send a message to Telegram.</p>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td>to</td><td>string</td><td>Telegram user ID</td></tr>
+  <tr><td>message</td><td>string</td><td>Message text</td></tr>
+  <tr><td>parse_mode</td><td>string</td><td><code>Markdown</code> or <code>HTML</code> (optional)</td></tr>
+</table>
+</body>
+</html>

@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"math"
+	"notification-service-api/pkg/monotime"
 	"notification-service-api/pkg/utils"
 	"os"
 	"sync/atomic"
@@ -34,7 +35,7 @@ func StatisticsMiddleware(influx *utils.InfluxDB, logger *zap.Logger) gin.Handle
 			"inflight":      cur,
 		}
 
-		err := influx.Send("notification_rpc", tags, fields, time.Now().UnixNano())
+		err := influx.Send("notification_rpc", tags, fields, monotime.NowNanoUnique())
 		if err != nil {
 			logger.Error("Send to Influx error", zap.Error(err))
 		}
