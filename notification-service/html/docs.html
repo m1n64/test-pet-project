@@ -70,6 +70,24 @@
 
 <hr>
 
+<h2>Authentication & Headers</h2>
+<p>All requests must include the following HTTP headers:</p>
+<table>
+  <tr><th>Header</th><th>Required</th><th>Description</th></tr>
+  <tr>
+    <td><code>X-API-KEY</code></td>
+    <td>Yes</td>
+    <td>Access key for authentication. Without it, requests will be rejected.</td>
+  </tr>
+  <tr>
+    <td><code>X-REQUEST-ID</code></td>
+    <td>No</td>
+    <td>Optional unique request identifier for tracing (helps to correlate logs and metrics).</td>
+  </tr>
+</table>
+
+<hr>
+
 <h2>Procedures</h2>
 
 <h3>1. <code>email.send</code></h3>
