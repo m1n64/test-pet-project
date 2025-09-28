@@ -39,6 +39,7 @@ In **Graylog** you can create a UDP input on port `12201` to receive logs in GEL
 ## Screenshots
 
 <img width="2032" height="1091" alt="image" src="https://github.com/user-attachments/assets/dbd384e6-f83d-4cd1-ab1f-759ff8cdeff8" />
+<img width="2032" height="1167" alt="image" src="https://github.com/user-attachments/assets/73b7d2a1-dddb-4454-9fa0-52bfb497090c" />
 <img width="2032" height="1091" alt="image" src="https://github.com/user-attachments/assets/102861ae-fa90-44eb-972e-3565fa618544" />
 <img width="2032" height="1091" alt="image" src="https://github.com/user-attachments/assets/5a60330a-3c81-47e5-ba7f-4906f41e496f" />
 <img width="2032" height="1091" alt="image" src="https://github.com/user-attachments/assets/02a7304e-b513-41dd-a79f-f6bad2abf0d5" />
