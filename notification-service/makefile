@@ -33,6 +33,7 @@ help:
 	@echo "  make bash           - Open a bash shell inside the app container"
 	@echo "  make seed           - Seed the database"
 	@echo "  make cli            - CLI command"
+	@echo "  make generate       - Auto-Generate command"
 	@echo ""
 	@echo "📜  Logs:"
 	@echo "  make logs <container> - View logs of a specific container"
@@ -99,6 +100,11 @@ seed:
 ## 🔥 Run CLI command
 cli:
 	docker-compose exec $(APP_CONTAINER) go run cmd/cli/main.go
+
+## 🔥 Generate cache autoregistration
+generate:
+	docker-compose exec $(APP_CONTAINER) go generate ./...
+
 
 ## Fix for make to avoid creating unnecessary files
 %:
