@@ -12,6 +12,7 @@ import (
 	"notification-service-api/internal/notifications/infra/telegram"
 	"notification-service-api/internal/shared/queue"
 	"notification-service-api/internal/shared/rpc"
+	"notification-service-api/pkg/cache"
 	"notification-service-api/pkg/utils"
 	"os"
 )
@@ -29,6 +30,7 @@ type Dependencies struct {
 	Influx           *utils.InfluxDB
 	InfluxMonitoring *monitoring.InfluxMonitoring
 	SMTPClient       *utils.SMTPClient
+	MultiCache       *cache.MultiCache
 }
 
 func InitDependencies() *Dependencies {
@@ -79,6 +81,11 @@ func InitDependencies() *Dependencies {
 		logger,
 	)
 
+	multiCache, err := cache.NewMultiCache(redisConn, logger, 1000000)
+	if err != nil {
+		logger.Fatal("Error MultiCache connection")
+	}
+
 	validate := utils.InitValidator()
 
 	registry := rpc.NewRegistry()
@@ -106,5 +113,6 @@ func InitDependencies() *Dependencies {
 		Influx:           influx,
 		InfluxMonitoring: influxMonitoring,
 		SMTPClient:       smtpClient,
+		MultiCache:       multiCache,
 	}
 }

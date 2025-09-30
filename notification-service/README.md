@@ -17,6 +17,11 @@ cp .env.example .env
 make up
 ```
 
+To generate structures for cache:
+```bash
+make generate # optional
+```
+
 ## Ports
 - 5878 - JSON-RPC
 - 5864 - Debug

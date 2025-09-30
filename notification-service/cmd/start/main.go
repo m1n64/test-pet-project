@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"net/http"
 	"notification-service-api/internal/notifications/delivery/queue"
 	rpc2 "notification-service-api/internal/notifications/delivery/rpc"
@@ -24,10 +25,14 @@ var dependencies *di.Dependencies
 
 func init() {
 	dependencies = di.InitDependencies()
+	if err := dependencies.MultiCache.WarmFromRedis(); err != nil {
+		dependencies.Logger.Error("failed to warm multi cache from redis", zap.Error(err))
+	}
 }
 
 func main() {
 	utils.InitMigrations(dependencies.DB)
+	stopAutoFlush := dependencies.MultiCache.StartAutoFlush(5 * time.Minute)
 
 	r := gin.Default()
 
@@ -57,6 +62,13 @@ func main() {
 	go queue.StartTelegramConsumers(dependencies)
 	go queue.StartEmailConsumers(dependencies)
 
+	srv.RegisterOnShutdown(func() {
+		// flush multi cache to redis
+		// in case of server crash, multi cache will be lost
+		// so we need to flush it to redis before server shutdown
+		//closeMultiCache()
+	})
+
 	go func() {
 		fmt.Println("Server started on port 8000")
 
@@ -75,17 +87,34 @@ func main() {
 	defer cancel()
 	_ = srv.Shutdown(ctx)
 
+	closeMultiCache()
+	stopAutoFlush()
+
 	if dependencies.DB != nil {
 		sqlDB, _ := dependencies.DB.DB()
-		_ = sqlDB.Close()
+		if err := sqlDB.Close(); err != nil {
+			dependencies.Logger.Error("failed to close database", zap.Error(err))
+		}
 	}
 	if dependencies.Logger != nil {
-		_ = dependencies.Logger.Sync()
+		if err := dependencies.Logger.Sync(); err != nil {
+			dependencies.Logger.Error("failed to sync logger", zap.Error(err))
+		}
 	}
 
 	if dependencies.Influx != nil {
-		_ = dependencies.Influx.Close()
+		if err := dependencies.Influx.Close(); err != nil {
+			dependencies.Logger.Error("failed to close influx", zap.Error(err))
+		}
 	}
 
 	fmt.Println("Server exiting")
+}
+
+func closeMultiCache() {
+	if dependencies.MultiCache != nil {
+		if err := dependencies.MultiCache.FlushToRedisOnce(); err != nil {
+			dependencies.Logger.Error("failed to flush multi cache to redis", zap.Error(err))
+		}
+	}
 }
