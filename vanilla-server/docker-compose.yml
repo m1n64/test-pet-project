@@ -1,0 +1,31 @@
+services:
+  vanilla-server:
+    image: itzg/minecraft-server:latest
+    container_name: vanilla-server
+    restart: unless-stopped
+    ports:
+      - "${SERVER_PORT}:25565"
+      - "${RCON_PORT}:25575"
+    environment:
+      EULA: "TRUE"
+      TYPE: "FABRIC"
+      VERSION: "1.21.8"
+      FABRIC_LOADER_VERSION: "0.17.2"
+      # FABRIC_LAUNCHER_VERSION: "1.0.1"
+      MEMORY: "${MAX_RAM}"
+      ENABLE_RCON: "true"
+      RCON_PASSWORD: "${RCON_PASSWORD:-supersecretpassword}"
+      MODRINTH_PROJECTS: |
+        fabric-api
+      USE_AIKAR_FLAGS: "TRUE"
+    volumes:
+      - ./data:/data
+      - ./mods:/data/mods
+    tty: true
+    stdin_open: true
+    networks:
+      - pet-project-first-network
+
+networks:
+  pet-project-first-network:
+    external: true

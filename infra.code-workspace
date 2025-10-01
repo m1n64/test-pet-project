@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "monitoring"
+		},
+		{
+			"path": "shared"
+		},
+		{
+			"path": "vanilla-server"
+		}
+	],
+	"settings": {}
+}

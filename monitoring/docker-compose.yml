@@ -92,6 +92,9 @@ services:
       RABBIT_MQ_HOST: ${RABBITMQ_HOST}
       RABBIT_MQ_USER: ${RABBITMQ_USER}
       RABBIT_MQ_PASS: ${RABBITMQ_PASS}
+      VANILLA_SERVER_HOST: ${VANILLA_SERVER_HOST}
+      VANILLA_SERVER_RCON_PORT: ${VANILLA_SERVER_RCON_PORT}
+      VANILLA_SERVER_RCON_PASS: ${VANILLA_SERVER_RCON_PASSWORD}
     volumes:
       - ./configs/telegraf.conf:/etc/telegraf/telegraf.conf:ro
       - ./configs/telegraf.d:/etc/telegraf/telegraf.d:ro

@@ -1,4 +1,4 @@
-SERVICES ?= shared monitoring notification-service
+SERVICES ?= shared monitoring notification-service vanilla-server
 
 S ?=
 FILTERED_SERVICES := $(if $(S),$(filter $(S),$(SERVICES)),$(SERVICES))

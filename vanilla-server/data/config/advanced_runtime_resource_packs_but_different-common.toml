@@ -1,0 +1,4 @@
+#Whether to dump the generated resource packs to the dump directory. Used for debugging.
+dump = false
+#The directory where the resource packs are dumped to.
+dumpDirectory = "/tmp/arrp"
